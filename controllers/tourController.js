@@ -48,6 +48,22 @@ exports.getAllTours = async (req, res) => {
       query = query.select('-__v');
     }
 
+    //PAGINATION using page and limit.
+    //Example query - page=2&limit=10 meaning page no 2 with 10 results per page
+
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 100;
+    const skip = (page - 1) * limit;
+
+    //1-10 page 1, 11-20 page 2 ...
+    query = query.skip(skip).limit(limit);
+
+    // If page does not exist
+    if (req.query.page) {
+      const numTours = await Tour.countDocuments();
+      if (skip >= numTours) throw new Error('This page does not exist');
+    }
+
     // EXECUTE QUERY
     const tours = await query;
 
