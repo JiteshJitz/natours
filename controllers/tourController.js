@@ -2,6 +2,14 @@
 
 const Tour = require('../models/tourModel');
 
+// Creating and exporing middileware for top tours
+exports.aliasTopTours = (req, res, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
+
 // Route handlers - Tours
 
 exports.getAllTours = async (req, res) => {
@@ -38,7 +46,7 @@ exports.getAllTours = async (req, res) => {
       query = query.sort('-createdAt');
     }
 
-    //FIELD LIMITING
+    // FIELD LIMITING
     if (req.query.fields) {
       // Include only certain fields query - localhost:3000/api/v1/tours?fields=name,duration,price
       const fields = req.query.fields.split(',').join(' ');
@@ -48,14 +56,14 @@ exports.getAllTours = async (req, res) => {
       query = query.select('-__v');
     }
 
-    //PAGINATION using page and limit.
-    //Example query - page=2&limit=10 meaning page no 2 with 10 results per page
+    // PAGINATION using page and limit.
+    // Example query - page=2&limit=10 meaning page no 2 with 10 results per page
 
     const page = req.query.page * 1 || 1;
     const limit = req.query.limit * 1 || 100;
     const skip = (page - 1) * limit;
 
-    //1-10 page 1, 11-20 page 2 ...
+    // 1-10 page 1, 11-20 page 2 ...
     query = query.skip(skip).limit(limit);
 
     // If page does not exist
@@ -63,6 +71,9 @@ exports.getAllTours = async (req, res) => {
       const numTours = await Tour.countDocuments();
       if (skip >= numTours) throw new Error('This page does not exist');
     }
+
+    // ALIASING - Example page with 5 best and cheapest tours
+    // limit=5&sort=-ratingsAverage,price
 
     // EXECUTE QUERY
     const tours = await query;
